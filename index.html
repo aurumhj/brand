@@ -1,1 +1,139 @@
-테스트
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>아우름 헬스케어 | 통합 대시보드</title>
+	<style>
+		@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap');
+		:root { --ink:#172033; --muted:#718096; --line:#e7ebf2; --panel:#fff; --canvas:#f5f7fb; --navy:#253b68; --blue:#4178d6; --pale:#edf3ff; --green:#138a63; --red:#d65b5b; --amber:#b87928; }
+		* { box-sizing:border-box; }
+		body { margin:0; background:var(--canvas); color:var(--ink); font-family:'Noto Sans KR','DM Sans',sans-serif; font-size:14px; }
+		button { font:inherit; cursor:pointer; }
+		.shell { display:flex; min-height:100vh; }
+		.sidebar { width:248px; background:#192a4b; color:#dbe5f7; padding:28px 16px 20px; display:flex; flex-direction:column; flex-shrink:0; }
+		.brand { display:flex; align-items:center; gap:11px; padding:0 12px 35px; color:#fff; }
+		.brand-mark { width:35px; height:35px; border-radius:10px; background:#89b2ff; color:#182a4a; display:grid; place-items:center; font-weight:800; font-size:17px; }
+		.brand strong { font-size:16px; letter-spacing:-.4px; }
+		.brand small { display:block; color:#94a7c9; font-size:10px; margin-top:2px; letter-spacing:.4px; }
+		.nav-title { color:#7186ad; text-transform:uppercase; font-size:10px; font-weight:700; letter-spacing:1.4px; padding:0 13px 10px; }
+		.nav { display:grid; gap:5px; }
+		.nav button { border:0; color:#aebdd8; background:transparent; text-align:left; padding:12px 13px; border-radius:8px; display:flex; gap:12px; align-items:center; font-size:13px; transition:.2s; }
+		.nav button:hover { color:#fff; background:#253d67; }
+		.nav button.active { color:#fff; background:#35578f; font-weight:700; }
+		.nav-icon { width:18px; text-align:center; font-size:16px; opacity:.9; }
+		.side-footer { margin-top:auto; padding:18px 12px 0; border-top:1px solid #2b4064; color:#91a4c6; font-size:11px; line-height:1.6; }
+		.side-footer b { color:#d6e1f5; font-weight:600; }
+		main { min-width:0; flex:1; }
+		.topbar { height:82px; background:#fff; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; padding:0 42px; }
+		.eyebrow { font-size:11px; color:var(--blue); font-weight:700; letter-spacing:1px; margin-bottom:5px; }
+		.topbar h1 { margin:0; font-size:21px; letter-spacing:-.8px; }
+		.today { color:var(--muted); font-size:12px; display:flex; align-items:center; gap:17px; }
+		.avatar { background:#dce8fb; color:#305891; width:33px; height:33px; display:grid; place-items:center; border-radius:50%; font-weight:700; }
+		.content { max-width:1360px; margin:0 auto; padding:36px 42px 60px; }
+		.section-head { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:26px; gap:20px; }
+		.section-head h2 { margin:0 0 7px; font-size:26px; letter-spacing:-1.1px; }
+		.section-head p { margin:0; color:var(--muted); font-size:13px; }
+		.date-chip { padding:8px 12px; background:#fff; border:1px solid var(--line); color:#61708a; border-radius:7px; font-size:12px; white-space:nowrap; }
+		.metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:16px; }
+		.card { background:var(--panel); border:1px solid var(--line); border-radius:10px; }
+		.metric { padding:20px; min-height:137px; }
+		.metric-label { color:var(--muted); font-size:12px; display:flex; justify-content:space-between; align-items:center; }
+		.metric-icon { color:var(--blue); background:var(--pale); width:28px; height:28px; border-radius:7px; display:grid; place-items:center; font-size:14px; }
+		.metric-value { font-family:'DM Sans','Noto Sans KR',sans-serif; font-size:29px; letter-spacing:-1px; font-weight:700; margin:17px 0 5px; }
+		.metric-note { font-size:11px; color:var(--muted); }
+		.up { color:var(--green); font-weight:600; } .down { color:var(--red); font-weight:600; }
+		.chart-card { padding:21px 22px 15px; }
+		.chart-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:19px; }
+		.card-title { font-weight:700; font-size:14px; }
+		.card-subtitle { color:var(--muted); font-size:11px; margin-top:4px; }
+		.legend { color:var(--muted); font-size:11px; display:flex; align-items:center; gap:6px; }
+		.legend i { width:7px; height:7px; border-radius:50%; background:var(--blue); display:inline-block; }
+		.chart { width:100%; height:235px; display:block; }
+		.chart-grid { stroke:#edf0f5; stroke-width:1; } .chart-line { fill:none; stroke:#477ed9; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; } .chart-area { fill:#eaf1ff; opacity:.7; } .chart-dot { fill:#fff; stroke:#477ed9; stroke-width:2; }
+		.view { display:none; animation:rise .35s ease both; } .view.active { display:block; } @keyframes rise { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:none} }
+		.description { padding:15px 17px; background:#f1f5fc; border:1px solid #dfe8f7; color:#4c6287; border-radius:8px; margin-bottom:18px; font-size:13px; }
+		.description span { color:#477ed9; font-size:16px; margin-right:8px; }
+		.table-wrap { overflow:auto; } table { width:100%; border-collapse:collapse; min-width:620px; } th,td { padding:15px 18px; text-align:left; border-bottom:1px solid var(--line); white-space:nowrap; } th { color:#8994a7; font-size:11px; font-weight:600; background:#fafbfc; } td { color:#344057; font-size:13px; } tr:last-child td { border-bottom:0; } .product { font-weight:700; color:var(--ink); } .keyword { color:#66748c; } .rank { font-family:'DM Sans',sans-serif; font-weight:700; }
+		.ad-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:15px; } .ad-card { padding:21px; } .ad-card h3 { margin:0 0 19px; font-size:15px; } .ad-rank { display:flex; justify-content:space-between; align-items:end; border-bottom:1px solid var(--line); padding-bottom:17px; margin-bottom:16px; } .ad-rank span { color:var(--muted); font-size:11px; } .ad-rank strong { font-family:'DM Sans',sans-serif; font-size:31px; } .suggestion { background:#f8f9fc; color:#59677f; padding:12px; min-height:63px; font-size:12px; line-height:1.65; border-radius:6px; } .run-btn { border:0; background:var(--navy); color:#fff; padding:10px 16px; border-radius:6px; font-weight:600; font-size:12px; min-width:105px; } .run-btn:disabled { opacity:.7; } .spinner { display:inline-block; width:12px; height:12px; border:2px solid #91a7ca; border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; vertical-align:-2px; margin-right:6px; } @keyframes spin { to{transform:rotate(360deg)} }
+		.content-list { display:grid; gap:10px; } .content-item { padding:18px 20px; display:flex; align-items:center; justify-content:space-between; gap:20px; transition:.2s; } .content-item:hover { border-color:#b9cce9; transform:translateX(2px); } .content-info { min-width:0; } .content-info h3 { font-size:14px; margin:0 0 9px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .content-meta { color:var(--muted); font-size:11px; } .status { display:inline-flex; padding:5px 9px; border-radius:4px; font-size:10px; font-weight:700; flex-shrink:0; } .status.review { color:#a0691d; background:#fff4df; } .status.wait { color:#5263a5; background:#edf0ff; } .status.done { color:#137954; background:#e4f6ee; } .open-link { background:transparent; border:0; color:#477ed9; font-size:12px; font-weight:600; white-space:nowrap; }
+		.drawer-backdrop { position:fixed; inset:0; background:rgba(19,31,54,.28); opacity:0; pointer-events:none; transition:.25s; z-index:4; } .drawer-backdrop.open { opacity:1; pointer-events:auto; } .drawer { position:fixed; z-index:5; top:0; right:0; width:min(470px,92vw); height:100vh; background:#fff; transform:translateX(100%); transition:.3s ease; box-shadow:-10px 0 30px rgba(26,43,74,.1); padding:30px; } .drawer.open { transform:none; } .drawer-top { display:flex; justify-content:space-between; align-items:start; border-bottom:1px solid var(--line); padding-bottom:22px; } .drawer h2 { margin:8px 0 5px; font-size:19px; letter-spacing:-.5px; } .drawer small { color:var(--muted); } .close { border:0; background:#f4f6fa; color:#62718a; width:30px; height:30px; border-radius:50%; font-size:18px; } .draft-body { color:#4b5870; line-height:2; font-size:13px; padding:23px 2px; white-space:pre-line; } .move-btn { border:1px solid #aac0e4; color:#3569b5; background:#f7faff; border-radius:6px; padding:11px 14px; font-weight:600; font-size:12px; }
+		@media (max-width:900px) { .sidebar { width:205px; } .topbar,.content { padding-left:24px; padding-right:24px; } .metrics { grid-template-columns:repeat(2,1fr); } .ad-grid { grid-template-columns:1fr; } }
+		@media (max-width:620px) { .shell { display:block; } .sidebar { width:100%; height:auto; padding:15px 12px 12px; } .brand { padding:0 8px 15px; } .nav-title,.side-footer { display:none; } .nav { display:flex; overflow:auto; gap:3px; } .nav button { padding:9px 11px; white-space:nowrap; font-size:11px; } .nav-icon { display:none; } .topbar { height:69px; padding:0 18px; } .eyebrow { font-size:9px; } .topbar h1 { font-size:16px; } .today { font-size:10px; gap:8px; } .today .avatar { width:27px; height:27px; } .content { padding:25px 15px 40px; } .section-head h2 { font-size:22px; } .date-chip { display:none; } .metrics { gap:9px; } .metric { padding:15px; min-height:120px; } .metric-value { font-size:24px; margin-top:14px; } .metric-icon { display:none; } .chart-card { padding:17px 14px 10px; } .chart { height:190px; } .section-head { margin-bottom:20px; } }
+	</style>
+</head>
+<body>
+	<div class="shell">
+		<aside class="sidebar">
+			<div class="brand"><div class="brand-mark">A</div><div><strong>아우름 헬스케어</strong><small>OPERATIONS CONSOLE</small></div></div>
+			<div class="nav-title">워크스페이스</div>
+			<nav class="nav" aria-label="주요 메뉴">
+				<button class="active" data-view="overview"><span class="nav-icon">▦</span>오늘의 현황</button>
+				<button data-view="search"><span class="nav-icon">⌕</span>검색 노출 모니터링</button>
+				<button data-view="ads"><span class="nav-icon">↗</span>광고 인사이트</button>
+				<button data-view="content"><span class="nav-icon">▤</span>콘텐츠 자동화 현황</button>
+			</nav>
+			<div class="side-footer"><b>마지막 동기화</b><br>오늘 오전 09:10<br><br>모든 수치는 목업 데이터입니다.</div>
+		</aside>
+		<main>
+			<header class="topbar"><div><div class="eyebrow">AUREUM HEALTHCARE</div><h1 id="top-title">오늘의 현황</h1></div><div class="today"><span id="today-date"></span><div class="avatar">김</div></div></header>
+			<div class="content">
+				<section class="view active" id="overview">
+					<div class="section-head"><div><h2>좋은 아침이에요, 김담당자님</h2><p>아우름 헬스케어의 오늘 운영 현황을 한눈에 확인하세요.</p></div><div class="date-chip">2024. 06. 18 · 화요일</div></div>
+					<div class="metrics">
+						<div class="card metric"><div class="metric-label">오늘 주문 건수 <span class="metric-icon">⌁</span></div><div class="metric-value">128건</div><div class="metric-note"><span class="up">▲ 12.4%</span> 지난주 같은 날 대비</div></div>
+						<div class="card metric"><div class="metric-label">이번 주 검색 순위 변동 <span class="metric-icon">⌕</span></div><div class="metric-value">+8.6%</div><div class="metric-note"><span class="up">▲ 4개</span> 상승 키워드 기준</div></div>
+						<div class="card metric"><div class="metric-label">이번 달 광고비 집행액 <span class="metric-icon">₩</span></div><div class="metric-value">₩2.4M</div><div class="metric-note">예산의 <span class="up">68%</span> 집행</div></div>
+						<div class="card metric"><div class="metric-label">콘텐츠 발행 대기 건수 <span class="metric-icon">□</span></div><div class="metric-value">7건</div><div class="metric-note"><span class="down">● 확인 필요</span> 검토 중인 초안</div></div>
+					</div>
+					<div class="card chart-card"><div class="chart-row"><div><div class="card-title">최근 7일 주문량 추이</div><div class="card-subtitle">일별 주문 건수 · 단위: 건</div></div><div class="legend"><i></i> 주문 건수</div></div><div id="orders-chart"></div></div>
+				</section>
+
+				<section class="view" id="search">
+					<div class="section-head"><div><h2>검색 노출 모니터링</h2><p>키워드별 검색 성과와 순위 변화를 관리합니다.</p></div><div class="date-chip">최근 수집 · 오늘 08:00</div></div>
+					<div class="description"><span>◌</span>매일 아침 자사 키워드의 네이버 검색 순위를 자동으로 수집해 보여줍니다</div>
+					<div class="card chart-card" style="margin-bottom:16px"><div class="chart-row"><div><div class="card-title">주요 키워드 순위 추이</div><div class="card-subtitle">최근 14일 · 낮을수록 높은 순위입니다</div></div><div class="legend"><i></i> 평균 순위</div></div><div id="rank-chart"></div></div>
+					<div class="card table-wrap"><table><thead><tr><th>상품명</th><th>검색 키워드</th><th>현재 순위</th><th>지난주 대비</th><th>최근 수집일</th></tr></thead><tbody>
+						<tr><td class="product">아우름 프로바이오틱스</td><td class="keyword">장 건강 유산균</td><td class="rank">3위</td><td class="up">▲ 4위 상승</td><td>오늘 08:02</td></tr>
+						<tr><td class="product">아우름 비타민C</td><td class="keyword">비타민C 추천</td><td class="rank">7위</td><td class="up">▲ 2위 상승</td><td>오늘 08:02</td></tr>
+						<tr><td class="product">아우름 오메가3</td><td class="keyword">오메가3 추천</td><td class="rank">11위</td><td class="down">▼ 3위 하락</td><td>오늘 08:03</td></tr>
+						<tr><td class="product">아우름 마그네슘</td><td class="keyword">마그네슘 영양제</td><td class="rank">15위</td><td class="up">▲ 1위 상승</td><td>오늘 08:03</td></tr>
+					</tbody></table></div>
+				</section>
+
+				<section class="view" id="ads">
+					<div class="section-head"><div><h2>광고 인사이트</h2><p>광고 성과를 살펴보고 다음 액션을 확인하세요.</p></div><button class="run-btn" id="analyze-btn">분석 실행</button></div>
+					<div class="description"><span>✦</span>광고 노출 데이터를 분석해 예산 조정을 제안합니다</div>
+					<div class="ad-grid" id="ad-grid">
+						<div class="card ad-card"><h3>아우름 프로바이오틱스</h3><div class="ad-rank"><span>현재 노출 순위</span><strong>3위</strong></div><div class="suggestion">최근 전환율이 안정적입니다 — 현재 예산 유지 제안</div></div>
+						<div class="card ad-card"><h3>아우름 오메가3</h3><div class="ad-rank"><span>현재 노출 순위</span><strong>11위</strong></div><div class="suggestion">오메가3 키워드 노출 하락세 — 광고비 10% 증액 제안</div></div>
+						<div class="card ad-card"><h3>아우름 비타민C</h3><div class="ad-rank"><span>현재 노출 순위</span><strong>7위</strong></div><div class="suggestion">주말 검색량 증가 예상 — 주말 집중 집행 제안</div></div>
+					</div>
+				</section>
+
+				<section class="view" id="content">
+					<div class="section-head"><div><h2>콘텐츠 자동화 현황</h2><p>생성된 초안을 검토하고 발행 준비 상태를 관리합니다.</p></div><div class="date-chip">이번 달 생성 · 18건</div></div>
+					<div class="description"><span>✦</span>상세페이지 콘텐츠를 소스로 블로그/SNS용 콘텐츠 초안을 자동 생성합니다</div>
+					<div class="content-list">
+						<article class="card content-item" data-draft="0"><div class="content-info"><h3>장 건강을 위한 유산균, 언제 먹는 것이 좋을까요?</h3><div class="content-meta">블로그 · 2024.06.17 생성 · 820자</div></div><span class="status review">초안 검토중</span><button class="open-link">초안 보기 →</button></article>
+						<article class="card content-item" data-draft="1"><div class="content-info"><h3>매일 간편하게 챙기는 비타민C 섭취 가이드</h3><div class="content-meta">인스타그램 · 2024.06.16 생성 · 420자</div></div><span class="status wait">승인 대기</span><button class="open-link">초안 보기 →</button></article>
+						<article class="card content-item" data-draft="2"><div class="content-info"><h3>아우름 오메가3가 만들어지는 꼼꼼한 과정</h3><div class="content-meta">블로그 · 2024.06.14 생성 · 1,120자</div></div><span class="status done">발행 완료</span><button class="open-link">초안 보기 →</button></article>
+					</div>
+				</section>
+			</div>
+		</main>
+	</div>
+	<div class="drawer-backdrop" id="backdrop"></div><aside class="drawer" id="drawer"><div class="drawer-top"><div><span class="status review">초안 검토중</span><h2 id="draft-title"></h2><small>블로그 콘텐츠 초안</small></div><button class="close" id="close-drawer" aria-label="닫기">×</button></div><div class="draft-body" id="draft-body"></div><button class="move-btn">발행 페이지로 이동</button></aside>
+	<script>
+		const titles = { overview:'오늘의 현황', search:'검색 노출 모니터링', ads:'광고 인사이트', content:'콘텐츠 자동화 현황' };
+		document.getElementById('today-date').textContent = new Intl.DateTimeFormat('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'}).format(new Date());
+		document.querySelectorAll('.nav button').forEach(button => button.addEventListener('click', () => { document.querySelectorAll('.nav button').forEach(item=>item.classList.remove('active')); document.querySelectorAll('.view').forEach(item=>item.classList.remove('active')); button.classList.add('active'); document.getElementById(button.dataset.view).classList.add('active'); document.getElementById('top-title').textContent=titles[button.dataset.view]; }));
+		function chart(values, labels, max, invert=false) { const width=900, height=235, pad={t:15,r:12,b:32,l:34}, innerW=width-pad.l-pad.r, innerH=height-pad.t-pad.b; const points=values.map((value,i)=>[pad.l+i*innerW/(values.length-1),pad.t+(invert ? value/max : (max-value)/max)*innerH]); const line=points.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' '); const area=line+' L '+points.at(-1)[0]+' '+(height-pad.b)+' L '+points[0][0]+' '+(height-pad.b)+' Z'; let grid=''; for(let i=0;i<4;i++){const y=pad.t+i*innerH/3; grid+=`<line class="chart-grid" x1="${pad.l}" y1="${y}" x2="${width-pad.r}" y2="${y}"/><text x="2" y="${y+4}" fill="#a0a9b9" font-size="10">${invert?Math.round(i*max/3):Math.round(max-i*max/3)}</text>`;} const dots=points.map(p=>`<circle class="chart-dot" cx="${p[0]}" cy="${p[1]}" r="3.5"/>`).join(''); const xlabels=labels.map((label,i)=>`<text x="${points[i][0]}" y="${height-8}" text-anchor="middle" fill="#a0a9b9" font-size="10">${label}</text>`).join(''); return `<svg class="chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img">${grid}<path class="chart-area" d="${area}"/><path class="chart-line" d="${line}"/>${dots}${xlabels}</svg>`; }
+		document.getElementById('orders-chart').innerHTML=chart([76,92,84,118,105,132,128],['6/12','6/13','6/14','6/15','6/16','6/17','오늘'],150);
+		document.getElementById('rank-chart').innerHTML=chart([19,18,18,16,17,14,15,13,12,13,10,11,9,8],['6/5','6/6','6/7','6/8','6/9','6/10','6/11','6/12','6/13','6/14','6/15','6/16','6/17','오늘'],24,true);
+		const analyze=document.getElementById('analyze-btn'); analyze.addEventListener('click',()=>{ analyze.disabled=true; analyze.innerHTML='<span class="spinner"></span>분석 중'; setTimeout(()=>{ document.querySelectorAll('.suggestion')[1].textContent='오메가3 키워드 회복세 감지 — 현재 예산 유지 및 소재 A/B 테스트 제안'; document.querySelectorAll('.suggestion')[2].textContent='비타민C 전환 효율 우수 — 효율 중심으로 5% 증액 제안'; analyze.disabled=false; analyze.textContent='분석 완료'; setTimeout(()=>analyze.textContent='분석 실행',1800); },1100); });
+		const drafts=[['장 건강을 위한 유산균, 언제 먹는 것이 좋을까요?','유산균은 식사 전후 언제 섭취하는 것이 좋을까요?\n\n장까지 살아서 도착하는 유산균을 고르는 것만큼, 꾸준히 섭취하는 습관도 중요합니다. 오늘은 일상에서 실천하기 쉬운 유산균 섭취 가이드를 알아봅니다.\n\n아우름 프로바이오틱스는 매일 한 포로 간편하게 장 건강을 관리할 수 있도록 설계했습니다.'],['매일 간편하게 챙기는 비타민C 섭취 가이드','바쁜 하루에도 건강을 챙기는 가장 간단한 방법.\n\n상큼한 하루를 시작하는 비타민C 섭취 팁과 아우름 비타민C의 특징을 소개합니다.'],['아우름 오메가3가 만들어지는 꼼꼼한 과정','좋은 원료를 고르는 일부터 한 캡슐에 담기까지.\n\n아우름 오메가3가 소비자에게 도착하기 전 거치는 꼼꼼한 품질 관리 과정을 담았습니다.']];
+		const drawer=document.getElementById('drawer'), backdrop=document.getElementById('backdrop'); document.querySelectorAll('.content-item').forEach(item=>item.addEventListener('click',event=>{if(event.target.tagName==='BUTTON' || event.currentTarget===item){document.getElementById('draft-title').textContent=drafts[item.dataset.draft][0]; document.getElementById('draft-body').textContent=drafts[item.dataset.draft][1]; drawer.classList.add('open'); backdrop.classList.add('open');}})); function closeDrawer(){drawer.classList.remove('open');backdrop.classList.remove('open');} document.getElementById('close-drawer').addEventListener('click',closeDrawer); backdrop.addEventListener('click',closeDrawer);
+	</script>
+</body>
+</html>
